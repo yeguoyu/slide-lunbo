@@ -1,0 +1,117 @@
+
+<style>
+.cs{padding:2rem 0 2rem 5%;font-family:var(--font-sans);}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
+.ct{font-size:22px;font-weight:500;color:var(--color-text-primary);margin:0;}
+.cc{display:flex;gap:8px;padding-right:5%;}
+.cb{width:36px;height:36px;border-radius:50%;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s,opacity 0.2s;}
+.cb:hover{background:var(--color-background-secondary);}
+.cb:disabled{opacity:0.3;cursor:default;}
+.cv{overflow:hidden;}
+.ck{display:flex;gap:16px;will-change:transform;}
+.card{flex:0 0 260px;border-radius:14px;overflow:hidden;position:relative;cursor:pointer;}
+.card img{width:100%;height:340px;object-fit:cover;display:block;transition:transform 0.5s ease;}
+.card:hover img{transform:scale(1.04);}
+.cl{position:absolute;bottom:0;left:0;right:0;padding:56px 16px 16px;background:linear-gradient(to top,rgba(0,0,0,0.75) 0%,transparent 100%);color:#fff;font-size:15px;font-weight:500;}
+</style>
+
+<div class="cs">
+  <div class="ch">
+    <h2 class="ct">What's Thermal Master for?</h2>
+    <div class="cc">
+      <button class="cb" id="prev" disabled>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="cb" id="next">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3L11 8L6 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="cv" id="vp">
+    <div class="ck" id="track">
+      <div class="card"><img src="https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=520&q=80" alt="HVAC"><div class="cl">HVAC</div></div>
+      <div class="card"><img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=520&q=80" alt="Industrial Inspection"><div class="cl">Industrial Inspection</div></div>
+      <div class="card"><img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=520&q=80" alt="Bird Observation"><div class="cl">Bird Observation</div></div>
+      <div class="card"><img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=520&q=80" alt="PCB Maintenance"><div class="cl">PCB Maintenance</div></div>
+      <div class="card"><img src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=520&q=80" alt="Car Night Vision"><div class="cl">Car Night Vision</div></div>
+      <div class="card"><img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=520&q=80" alt="Building Inspection"><div class="cl">Building Inspection</div></div>
+      <div class="card"><img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=520&q=80" alt="Security Monitoring"><div class="cl">Security Monitoring</div></div>
+      <div class="card"><img src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=520&q=80" alt="Car Night Vision"><div class="cl">Car Night Vision</div></div>
+      <div class="card"><img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=520&q=80" alt="Building Inspection"><div class="cl">Building Inspection</div></div>
+      <div class="card"><img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=520&q=80" alt="Security Monitoring"><div class="cl">Security Monitoring</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const track = document.getElementById('track');
+  const vp    = document.getElementById('vp');
+  const prev  = document.getElementById('prev');
+  const next  = document.getElementById('next');
+
+  const CARD  = 260;
+  const GAP   = 16;
+  const STEP  = CARD + GAP;
+  const N     = track.children.length;
+  let current = 0;
+  let animId  = null;
+  let curX    = 0;
+  let targetX = 0;
+
+  /* 弹性缓动 — 每帧插值，比 CSS transition 更有弹性感 */
+  function lerp(a, b, t){ return a + (b - a) * t; }
+
+  function animate(){
+    curX = lerp(curX, targetX, 0.1);
+    if(Math.abs(curX - targetX) < 0.3){
+      curX = targetX;
+      track.style.transform = `translateX(${-curX}px)`;
+      animId = null;
+      return;
+    }
+    track.style.transform = `translateX(${-curX}px)`;
+    animId = requestAnimationFrame(animate);
+  }
+
+  function moveTo(x){
+    targetX = x;
+    if(animId) cancelAnimationFrame(animId);
+    animId = requestAnimationFrame(animate);
+  }
+
+  function maxOffset(){
+    /* 总轨道宽度 - 视口宽度，确保末尾不留白 */
+    const trackW = N * CARD + (N - 1) * GAP;
+    return Math.max(0, trackW - vp.offsetWidth);
+  }
+
+  function update(){
+    const raw    = current * STEP;
+    const offset = Math.min(raw, maxOffset());
+    moveTo(offset);
+    prev.disabled = current === 0;
+    /* 到达末尾：offset 不能再增大 */
+    next.disabled = Math.min((current + 1) * STEP, maxOffset()) <= offset && current > 0 || current * STEP >= maxOffset();
+  }
+
+  /* 更新 next 禁用状态的精确判断 */
+  function refreshButtons(){
+    const offset = Math.min(current * STEP, maxOffset());
+    prev.disabled = current === 0;
+    next.disabled = offset >= maxOffset();
+  }
+
+  prev.addEventListener('click', ()=>{ if(current > 0){ current--; update(); refreshButtons(); }});
+  next.addEventListener('click', ()=>{
+    const offset = Math.min(current * STEP, maxOffset());
+    if(offset < maxOffset()){ current++; update(); refreshButtons(); }
+  });
+
+  /* 初始化 */
+  update();
+  refreshButtons();
+
+  window.addEventListener('resize', ()=>{ update(); refreshButtons(); });
+})();
+</script>
