@@ -59,7 +59,6 @@
   let curX    = 0;
   let targetX = 0;
 
-  /* 弹性缓动 — 每帧插值，比 CSS transition 更有弹性感 */
   function lerp(a, b, t){ return a + (b - a) * t; }
 
   function animate(){
@@ -81,7 +80,6 @@
   }
 
   function maxOffset(){
-    /* 总轨道宽度 - 视口宽度，确保末尾不留白 */
     const trackW = N * CARD + (N - 1) * GAP;
     return Math.max(0, trackW - vp.offsetWidth);
   }
@@ -91,11 +89,9 @@
     const offset = Math.min(raw, maxOffset());
     moveTo(offset);
     prev.disabled = current === 0;
-    /* 到达末尾：offset 不能再增大 */
     next.disabled = Math.min((current + 1) * STEP, maxOffset()) <= offset && current > 0 || current * STEP >= maxOffset();
   }
 
-  /* 更新 next 禁用状态的精确判断 */
   function refreshButtons(){
     const offset = Math.min(current * STEP, maxOffset());
     prev.disabled = current === 0;
@@ -108,7 +104,6 @@
     if(offset < maxOffset()){ current++; update(); refreshButtons(); }
   });
 
-  /* 初始化 */
   update();
   refreshButtons();
 
